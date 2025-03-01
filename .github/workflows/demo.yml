@@ -36,8 +36,7 @@ jobs:
             linux/arm64
             linux/arm
           push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/kook-ticket-bot:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/kook-ticket-bot:latest
 
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v3
