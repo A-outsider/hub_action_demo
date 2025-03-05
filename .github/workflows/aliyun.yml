@@ -8,43 +8,16 @@ on:
 
 jobs:
   deploy:
+    name: Build-ssh
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: SSH Deployment
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v1.2.1
         with:
           host: ${{ secrets.SSH_HOST }}
           port: ${{ secrets.SSH_PORT || 22 }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            # 创建应用目录
-            mkdir -p /opt/my-app && cd /opt/my-app
-            
-            # 同步 compose 文件（保持目录结构）
-            echo "Deploying docker-compose.yaml..."
-            cat > docker-compose.yaml << 'EOF'
-            version: '3.8'
-            services:
-              app:
-                image: ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:${{ github.sha }}
-                restart: always
-                ports:
-                  - "3000:3000"
-                environment:
-                  - NODE_ENV=production
-            EOF
-
-            # 登录阿里云镜像仓库
-            echo ${{ secrets.ALIYUN_PASSWORD }} | docker login \
-              --username ${{ secrets.ALIYUN_USERNAME }} \
-              --password-stdin ${{ secrets.ALIYUN_REGISTRY }}
-
-            # 执行部署
-            docker compose pull
-            docker compose up -d --force-recreate --remove-orphans
-            
-            # 清理旧镜像
-            docker image prune -af --filter "until=24h"
+          script: whoami
