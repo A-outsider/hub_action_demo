@@ -18,7 +18,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "docker-compose.yaml"
-          target: "/tmp/docker-compose.yaml"
+          target: /tmp/
           strip_components: 1
 
       - name: SSH Deployment
