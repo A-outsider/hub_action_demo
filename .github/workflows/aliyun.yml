@@ -8,9 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       # 安全文件传输步骤
       - name: Secure File Transfer
         uses: appleboy/scp-action@v0.1.7
@@ -45,7 +43,7 @@ jobs:
 
             # 部署命令
             docker-compose -f docker-compose.yaml pull
-            docker-compose -f docker-compose.yaml up -d \
+            docker-compose -f docker-compose.yaml up  \
               --force-recreate \
               --remove-orphans \
               --no-build

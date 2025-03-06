@@ -1,0 +1,5 @@
+services:
+  app:
+    image: registry.cn-shenzhen.aliyuncs.com/onlooker/test:latest
+    ports:
+      - 3000:3000
