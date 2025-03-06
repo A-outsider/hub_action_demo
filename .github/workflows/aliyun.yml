@@ -16,9 +16,9 @@ jobs:
         uses: appleboy/ssh-action@v1.2.1
         with:
           host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
           port: ${{ secrets.SSH_PORT || 22 }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          username: ${{ secrets.SSH_USER }}
           script: |
             # 创建应用目录
             mkdir -p /opt/my-app && cd /opt/my-app
