@@ -3,48 +3,52 @@ name: Aliyun Image CI/CD
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 安全文件传输步骤
+      - name: Secure File Transfer
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.yaml"
+          target: "/tmp/docker-compose.yaml"
+          strip_components: 1
 
       - name: SSH Deployment
         uses: appleboy/ssh-action@v1.2.1
         with:
           host: ${{ secrets.SSH_HOST }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
           username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 创建应用目录
-            mkdir -p /opt/my-app && cd /opt/my-app
-            
-            # 同步 compose 文件（保持目录结构）
-            echo "Deploying docker-compose.yaml..."
-            cat > docker-compose.yaml << 'EOF'
-            version: '3.8'
-            services:
-              app:
-                image: ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:${{ github.sha }}
-                restart: always
-                ports:
-                  - "3000:3000"
-                environment:
-                  - NODE_ENV=production
-            EOF
+            # 创建应用目录（使用临时提权）
+            sudo mkdir -p /opt/my-app
 
-            # 登录阿里云镜像仓库
-            echo ${{ secrets.ALIYUN_PASSWORD }} | docker login \
-              --username ${{ secrets.ALIYUN_USERNAME }} \
-              --password-stdin ${{ secrets.ALIYUN_REGISTRY }}
+            # 原子化文件替换
+            mv -f /tmp/docker-compose.yaml /opt/my-app/docker-compose.yaml
+            cd /opt/my-app
 
-            # 执行部署
-            docker compose pull
-            docker compose up -d --force-recreate --remove-orphans
-            
-            # 清理旧镜像
-            #docker image prune -af --filter "until=24h"
+            # 安全登录镜像仓库
+            echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login \
+              --username "${{ secrets.ALIYUN_USERNAME }}" \
+              --password-stdin "${{ secrets.ALIYUN_REGISTRY }}"
+
+            # 部署命令
+            docker-compose -f docker-compose.yaml pull
+            docker-compose -f docker-compose.yaml up -d \
+              --force-recreate \
+              --remove-orphans \
+              --no-build
+
+            # 安全清理（保留最近3个版本）
+            docker image prune -af --filter "label=maintainer=ci-system" --filter "until=72h"
