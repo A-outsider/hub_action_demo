@@ -39,12 +39,13 @@ jobs:
           push: true
           tags: |
             ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:latest
-            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:${{ GITHUB_REF_NAME }}-${{ GITHUB_RUN_NUMBER }}
+            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:${{ format('{0}-{1}', github.ref_name, github.run_number) }}
           labels: |
-            commit="1111"
-            build-date=${{ github.run_number }}
-          cache-from: type=gha,scope=${{ github.ref_name }}
-          cache-to: type=gha,mode=max,scope=${{ github.ref_name }}
+            branch=${{ github.ref_name }}
+            ci-run=${{ github.run_number }}
+            commit=${{ github.sha }}
+          cache-from: type=gha,scope=${{ format('{0}-{1}', github.ref_name, github.run_number) }}
+          cache-to: type=gha,mode=max,scope=${{ format('{0}-{1}', github.ref_name, github.run_number) }}
           provenance: true  # 启用安全元数据
 
 
