@@ -2,7 +2,7 @@ name: Aliyun Image CI/CD
 
 on:
   push:
-    branches: [ "release" ]
+    branches: [ "main" ]
 
 
 jobs:
