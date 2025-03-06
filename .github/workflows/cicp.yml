@@ -39,7 +39,7 @@ jobs:
           push: true
           tags: |
             ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:latest
-            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:${GITHUB_REF_NAME}-${GITHUB_RUN_NUMBER}
+            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:${{ GITHUB_REF_NAME }}-${{ GITHUB_RUN_NUMBER }}
           labels: |
             commit="1111"
             build-date=${{ github.run_number }}
