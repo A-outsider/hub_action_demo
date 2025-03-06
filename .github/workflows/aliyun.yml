@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  ali-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -38,18 +38,18 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm
           push: true
           tags: |
-            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:latest
             ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:${{ github.sha }}
-            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:${{ github.run_number }}
-          build-args: |
-            APP_NAME=${{ secrets.ALIYUN_REPO_NAME }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
+          labels: |
+            maintainer=ci-system  # 添加标签用于清理
+          cache-from: type=gha,scope=${{ github.ref_name }}
+          cache-to: type=gha,mode=max,scope=${{ github.ref_name }}
+          provenance: true  # 启用安全元数据
 
 
-  deploy:
+  service-run:
+    needs: ali-build
     runs-on: ubuntu-latest
+    timeout-minutes: 5  # 添加超时限制
     steps:
       - uses: actions/checkout@v4
       # 安全文件传输步骤
