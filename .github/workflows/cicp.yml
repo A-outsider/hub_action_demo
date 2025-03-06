@@ -2,10 +2,11 @@ name: Aliyun Image CI/CD
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "release" ]
+
 
 jobs:
-  ali-build:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -39,59 +40,10 @@ jobs:
           push: true
           tags: |
             ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:latest
-            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:${{ format('{0}-{1}', github.ref_name, github.run_number) }}
-          labels: |
-            branch=${{ github.ref_name }}
-            ci-run=${{ github.run_number }}
-            commit= git的提交id为 ${{ github.sha }}
-          cache-from: type=gha,scope=${{ format('{0}-{1}', github.ref_name, github.run_number) }}
-          cache-to: type=gha,mode=max,scope=${{ format('{0}-{1}', github.ref_name, github.run_number) }}
-
-
-  service-run:
-    needs: ali-build
-    runs-on: ubuntu-latest
-    timeout-minutes: 5  # 添加超时限制
-    steps:
-      - uses: actions/checkout@v4
-      # 安全文件传输步骤
-      - name: Secure File Transfer
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "docker-compose.yaml"
-          target: /tmp/
-          strip_components: 1
-
-      - name: SSH Deployment
-        uses: appleboy/ssh-action@v1.2.1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            # 创建应用目录（使用临时提权）
-            sudo mkdir -p /opt/my-app
-
-            # 原子化文件替换
-            mv -f /tmp/docker-compose.yaml /opt/my-app/docker-compose.yaml
-            cd /opt/my-app
-
-            # 安全登录镜像仓库
-            echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login \
-              --username "${{ secrets.ALIYUN_USERNAME }}" \
-              --password-stdin "${{ secrets.ALIYUN_REGISTRY }}"
-
-            # 部署命令
-            docker-compose -f docker-compose.yaml pull
-            docker-compose -f docker-compose.yaml up  \
-              --force-recreate \
-              --remove-orphans \
-              --no-build
-
-            # 安全清理（保留最近3个版本）
-            docker image prune -af --filter "label=maintainer=ci-system" --filter "until=72h"
+            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:${{ github.sha }}
+            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPO_NAME }}:v${{ github.run_number }}
+          build-args: |
+            APP_NAME=${{ secrets.ALIYUN_REPO_NAME }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
