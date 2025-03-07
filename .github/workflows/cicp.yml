@@ -13,7 +13,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 获取完整提交历史
+          submodules: 'true'
 
 
       - name: Setup Build Environment   # BuildKit 构建
@@ -30,14 +30,6 @@ jobs:
           username: ${{ secrets.ALIYUN_USERNAME }}
           password: ${{ secrets.ALIYUN_PASSWORD }}
 
-      - name: Get Commit Info
-        id: commit-info
-        run: |
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          COMMIT_MSG=$(git log -1 --pretty=%B | tr '\n' ' ' | sed 's/"/\\"/g')
-          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
-          echo "commit_msg=$COMMIT_MSG" >> $GITHUB_OUTPUT
-
 
       - name: Build and Push
         uses: docker/build-push-action@v5
@@ -53,7 +45,6 @@ jobs:
             maintainer=ci-system
             branch=${{ github.ref_name }}
             ci-run=${{ github.run_number }}
-            org.opencontainers.image.description=${{ steps.commit-info.outputs.commit_msg }}
           cache-from: type=gha,scope=${{ github.ref_name }}
           cache-to: type=gha,mode=max,scope=${{ github.ref_name }}
           provenance: false
